@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>"Affective Dots"</title>
+    <script src="/jspsych/jspsych.js"></script>
+    <script src="/jspsych/plugins/jspsych-html-keyboard-response.js"></script>
+    <script src="/jspsych/plugins/jspsych-instructions.js"></script>
+    <script src="/jspsych/plugins/jspsych-rdk.js"></script>
+    <script src="/jspsych/plugins/jspsych-html-slider-response.js"></script>
+    <script src="/jspsych/plugins/jspsych-image-keyboard-response.js"></script>
+    <script src="/jspsych/plugins/jspsych-resize.js"></script>
+    <script src="/jspsych/plugins/jspsych-fullscreen.js"></script>
+    <script src="/jspsych/plugins/svg.js/svg.min.js"></script>
+    <script src="/jspsych/plugins/jspsych-virtual-chinrest.js"></script>
+    <link rel="stylesheet" href="/jsPsych/css/jquery-ui.css">
+    <script src="/jspsych/jquery.min.js"></script>
+    <link rel="stylesheet" href="/jspsych/css/jspsych.css">
+  </head>
+  <style>
+  body {
+    color: white;
+    background-color: black;
+  }
+  </style>
+ <body>
+ </body>
+
+  <script>
+//// Settings ////////////
+document.getElementsByTagName("body")[0].style.background = "black";
+document.getElementsByTagName("body")[0].style.color = "white";
+
+var resize = {
+  type: "virtual-chinrest",
+  blindspot_reps: 0,
+  resize_units: "cm",
+  pixels_per_unit: 50,
+  item_path: "/jspsych/examples/img/card.png"
+};
+
+
+var full_screen = {
+  type: 'fullscreen',
+  fullscreen_mode: true }
+
+/// INSTRUCTIONS //////////////
+var instructions = {
+         type: 'instructions',
+         pages: ['<p style="color:white;"> Welcome to the experiment! <br><br> Press "SPACE" to continue or "B" to move back and forth.', '<p style="color:white;">Your goal is to indicate whether majority of the displayed dots are moving left (press e) or right (press t).</p>'],
+         key_forward: 'Space',
+         allow_backward: true,
+         key_backward: 'b',
+       };
+
+// Training block intro ////
+var training_intro = {
+         type: 'instructions',
+         pages: ['<p style="color:white;">Before moving to the actual experiment, you will have to pass two training blocks.</p>'],
+         key_forward: 'Space',
+         allow_backward: true,
+         key_backward: 'b',
+       };
+
+
+//// START Training BLOCK 1 ////
+var training1_start = {
+         type: 'instructions',
+         pages: ['<p style="color:white;">Press "SPACE" to start training block 1.'],
+         key_forward: 'Space',
+       };
+
+/// Start training block 2 ////
+var training2_start = {
+         type: 'instructions',
+         pages: ['<p style="color:white;">Press space to start training block 2.'],
+         key_forward: 'Space',
+       };
+
+/// Experimental block intro ////
+
+var experimental_start = {
+         type: 'instructions',
+         pages: ['<p style="color:white;">Congratuations! You passed the training phase. The experment will now begin.</p>',
+         '<p style="color:white;">During the experiment we will also ask you to report your confidence and your emotional state. Please try to be precise in your evaluations.</p>','<p style="color:white;"> Your confidence level for a given trial will be asked before and after a trial. scale instrutctions. </p> '],
+         key_forward: 'Space',
+       };
+
+
+// final screen
+var finish = {
+                type: 'instructions',
+                pages: ['<p style="color:white;">Thank you for participating!</p>'],
+                show_clickable_nav: true
+              };
+
+
+/////// TRIAL ELEMENTS ////////////////
+// fixation cross
+var fixation = {
+         type: 'html-keyboard-response',
+         stimulus: '<span style="font-size:40px;">+</span>',
+         choices: jsPsych.NO_KEYS,
+         trial_duration: 800,
+         background_color: "black",
+       }
+// inter trial interval ///
+
+var iti = {
+                type: 'html-keyboard-response',
+                stimulus: '<span style="font-size:40px;"></span>',
+                choices: jsPsych.NO_KEYS,
+                trial_duration: 1500,
+                background_color: "black",
+              }
+
+
+// RDK
+// Define % randomize RDK factors
+
+// trial counters
+var debug_info_console = false
+var trial = 1 // initialize counter
+var block = 1 // initialize counter
+var phase = -1 // initialize
+var current_condition = -1
+
+
+// define RDK
+var rdk = {
+    type: "rdk",
+    post_trial_gap: 0,
+    number_of_dots: 50,
+    dot_color: 'white',
+    dot_radius: 2,
+    dot_life: 5, // number of frames that pass before a dot disappears and reappears in a new frame
+    move_distance: window.innerWidth/650, // The number of pixel lengths the dot will move in each frame (analogous to speed of dots).
+    coherence: jsPsych.timelineVariable('coherence'), // The proportion of dots that move together in the coherent direction. Range is 0 to 1.
+    coherent_direction: function() {
+      if (jsPsych.timelineVariable('direction', true) == 'left') {
+        return 180
+      } else {
+        return 0
+      }
+    },
+    RDK_type: 5,
+    choices: ['e', 't'], // valid response keys
+    correct_choice: function() {
+      if (jsPsych.timelineVariable('direction', true) == 'right') {
+        return 't'
+      } else {
+        return 'e'
+      }
+    },
+    trial_duration: 5000,
+    response_ends_trial: true,
+    reinsert_type: 1,
+    aperture_type: 1,
+    aperture_width: (window.innerWidth/5),
+    aperture_height: (window.innerHeight/5),
+    aperture_center_x: function(){
+        return window.innerWidth/2;
+    },
+    aperture_center_y: function(){
+        return window.innerHeight/2;
+    },
+    fixation_cross: false,
+    background_color: 'black',
+    post_trial_gap: 500,
+    on_start: function(){
+      if (debug_info_console) {
+        console.log('PHASE: ' + phase)
+        console.log('BLOCK ' + block + ', TRIAL ' + trial)
+        console.log('direction: ' + jsPsych.timelineVariable('direction', true))
+        console.log('coherence: ' + jsPsych.timelineVariable('coherence', true))
+      }
+    },
+    on_finish: function(data){
+      if (debug_info_console){
+        console.log('accuracy: ' + data.correct)
+      }
+      if (phase == 'experimental') {
+        data.condition = current_condition
+      } else {data.condition = ''}
+      data.direction = jsPsych.timelineVariable('direction', true)
+      data.coherence_level = jsPsych.timelineVariable('coherence', true)
+      data.event = 'rdk'
+      data.trial = trial
+      data.block = block
+      data.phase = phase
+      data.screen_resolution = '' + screen.width + ' x ' + screen.height + ''
+      data.window_resolution = '' + window.innerWidth + ' x ' + window.innerHeight + '' // is not necessary equal to screen_resolution in full screen because of scaling in the OS (windows DPI / macbook retina)
+      data.focus = document.hasFocus()
+      trial = trial + 1
+    }
+};
+
+
+
+// trial feedback for training period (untested)
+var trial_feedback = {
+      type: 'html-keyboard-response',
+      stimulus: function(){
+        if (jsPsych.data.get().last(1).values()[0].event == 'rdk') {
+          var last_trial_response = jsPsych.data.get().last(1).values()[0].key_press;
+          var last_trial_correct = jsPsych.data.get().last(1).values()[0].correct;
+        } else {
+          var last_trial_response = jsPsych.data.get().last(3).values()[0].key_press;
+          var last_trial_correct = jsPsych.data.get().last(3).values()[0].correct;
+        }
+        if (last_trial_response == -1){
+          return '<p style="color:white; font-size: 48px;">Too late!</p>';
+        } else {
+          if (last_trial_correct) {
+            return '<p style="color:white; font-size: 48px;">Well done!</p>'; // nothing
+          } else {
+            return '<p style="color:white; font-size: 48px;">Incorrect!</p>';
+          }
+        }
+      },
+      trial_duration: 500,
+    };
+
+
+// block feedback for training period (untested)
+  var block_feedback = {
+          type: 'html-keyboard-response',
+          choices: ['space'],
+          stimulus: function(){
+            var trials = jsPsych.data.get().filter({block: block}, {phase: phase});
+            var correct_trials = trials.filter({correct: true});
+            var accuracy = Math.round(correct_trials.count() / trials.count() * 100);
+            var rt = Math.round(correct_trials.select('rt').median());
+
+            if (phase == 'training_1') {
+              if (accuracy < training_1_criterion) {
+                continue_message = "<p style='font-size: 32px; color:white;'>You must get "+ training_1_criterion +"% of responses correctly to continue. Let's try again! Press space to continue.</p>";
+              } else {
+                continue_message = "<p style='font-size: 32px; color:white;'>Press space to go to the next training block.</p>";
+              }
+            } else if (phase == 'training_2'){
+              if (accuracy < training_2_criterion) {
+                continue_message = "<p style='font-size: 32px; color:white;'>You must get "+ training_2_criterion +"% of responses correctly to continue. Let's try again! Press space to continue.</p>";
+              } else {
+                continue_message = "<p style='font-size: 32px; color:white;'> Press space to continue.</p>";
+              }
+            } else if (phase == 'training_3'){
+              if (accuracy < training_3_criterion) {
+                continue_message = "<p style='font-size: 32px;'>Je moet "+ training_3_criterion +"% halen om verder te gaan. We proberen opnieuw.</p>";
+              } else {
+                continue_message = "<p style='font-size: 32px;'>Druk op de spatie toets om naar het volgende blok te gaan.</p>";
+              }
+            } else {
+              continue_message = "<p style='font-size: 32px;'>Druk op de spatie toets om naar het volgende blok te gaan.</p>";
+            }
+
+            if (phase == 'experimental') {
+              sat_instruction = "<p style='font-size: 32px;'></p>"
+            } else {
+              sat_instruction = "<p style='font-size: 32px; color:white;'>Remember, your goal is to be fast and accurate!</p>"
+            }
+
+            return "<p style='font-size: 32px; color:white;'>You answered correctly on "+accuracy+"% of the trials.</p>"+
+            "<p style='font-size: 32px; color:white;'>Your mean reaction time was "+rt+" milliseconds.</p>"+
+            sat_instruction +
+            continue_message;
+          },
+          /**on_finish: function(){
+            trial = 1;
+              saveData('RDK_SAT_' + random_ID + '.csv',jsPsych.data.get().filter([{event: 'rdk'}]).csv())
+          } */
+        };
+// prospective confidence report
+
+
+var prosp_confidence = {
+    type: 'html-slider-response',
+    stimulus: '<p style = "color:rgb(79, 149, 177);">How well do you think you will do in the next attempt?</p>',
+    labels: ['Random guess (0)', 'Certainly know the answer (100)'],
+    prompt: ['<p style = "color:rgb(79, 149, 177);">Press space to confirm your choice.</p>'],
+    slider_number: true,
+    response_ends_trial: true,
+    require_movement: true,
+};
+
+// REtrospective confidence report
+var retro_confidence = {
+    type: 'html-slider-response',
+    stimulus: '<p style = "color:rgb(31, 111, 177);">How confident are you in you answer?</p>',
+    prompt: ['<p style = "color:rgb(31, 111, 177);">Press space to confirm your choice.</p>'],
+    labels: ['Random guess (0)', 'Very confident (100)'],
+    slider_number: true,
+    response_ends_trial: true,
+    require_movement: true,
+};
+
+// affect report
+
+var affect_slider = {
+    type: 'html-slider-response',
+    stimulus: '<p style = "color:rgb(157, 223, 201);">How do you feel about the last attempt?</p>',
+    labels: ['Very negative (0)', 'Very positive (100)'],
+    prompt: ['<p style = "color:rgb(157, 223, 201);">Press space to confirm your choice.</p>'],
+    slider_number: true,
+    response_ends_trial: true,
+    require_movement: true,
+};
+
+
+//// PROCEDURES ///////////////////
+// training procedure 1
+var n_design_reps_training = 1
+var training_coherence = 0.9
+var training_factors = {
+      direction: ['right','left'],
+      coherence: [training_coherence]
+    }
+// set to 10
+var training_design = jsPsych.randomization.factorial(training_factors,2)
+
+var training_procedure1 = {
+      timeline: [fixation, rdk, trial_feedback],
+      timeline_variables: training_design,
+      repetitions: n_design_reps_training,
+      randomize_order: true
+    };
+
+// training procedure 2
+var training_coherence2 = [0.05,0.1,0.2,0.4]
+var training_factors2 = {
+      direction: ['right','left'],
+      coherence: training_coherence2
+    }
+// set to 3
+var training_design2 = jsPsych.randomization.factorial(training_factors2,2)
+
+
+var training_procedure2 = {
+  timeline: [fixation, rdk, trial_feedback],
+  timeline_variables: training_design2,
+  repetitions: n_design_reps_training,
+  randomize_order: true
+};
+
+// BLOCK level
+var training_1_criterion = 80   // percent correct to pass block 1
+var training_2_criterion = 80   // percent correct to pass block 2
+
+// training block1
+var training_block1 = {
+      timeline: [training1_start, training_procedure1, block_feedback],
+      loop_function: function() {
+        var trials = jsPsych.data.get().filter({block: block}, {phase: phase});
+        var correct_trials = trials.filter({correct: true});
+        var accuracy = Math.round(correct_trials.count() / trials.count() * 100);
+        block = block + 1
+        if (accuracy < training_1_criterion) {
+          return true
+        } else {
+          return false
+        }
+      },
+      on_start: function() {phase = 'training_1'}
+    }
+
+// training block2
+var training_block2 = {
+  timeline: [training2_start, training_procedure2, block_feedback],
+  loop_function: function() {
+    var trials = jsPsych.data.get().filter({block: block}, {phase: phase});
+    var correct_trials = trials.filter({correct: true});
+    var accuracy = Math.round(correct_trials.count() / trials.count() * 100);
+    block = block + 1
+    if (accuracy < training_2_criterion) {
+      return true
+    } else {
+      return false
+    }
+  },
+  on_start: function() {phase = 'training_2'}
+}
+
+
+
+// EXPERIMENTAL trial structure
+experimental_trial = {
+     timeline: [prosp_confidence, fixation, rdk, retro_confidence, affect_slider,iti]
+    }
+
+
+// easy block parameters
+// define combinations of direction and coherence
+var easy_params = [{direction:"0", coherence:"0.3"}, {direction:"180",coherence:"0.3"}, {direction:"0",coherence:"0.5"}, {direction:"180",coherence:"0.5"}]
+console.log(easy_params)
+// randomly sample with higher weights for easy trials.
+var design_easy = jsPsych.randomization.sampleWithReplacement(easy_params,2,[0.25,0.25,0.75,0.75])
+console.log(design_easy)
+
+// build an easy block
+var easy_block = {
+     timeline: [experimental_trial],
+     timeline_variables: design_easy,
+    }
+
+
+// hard block parameters
+var hard_params = [{direction:"0", coherence:"0.3"}, {direction:"180",coherence:"0.3"}, {direction:"0",coherence:"0.1"}, {direction:"180",coherence:"0.1"}]
+console.log(hard_params)
+
+var design_hard = jsPsych.randomization.sampleWithReplacement(hard_params,2,[0.25,0.25,0.75,0.75])
+console.log(design_hard)
+
+var hard_block = {
+         timeline: [experimental_trial],
+         timeline_variables: design_hard,
+        }
+
+/// experimental procedure
+// randomize blocks for timeline
+var block_type = ["easy_block","hard_block"];
+console.log(block_type)
+var exp_timeline = jsPsych.randomization.repeat(block_type, 1);
+console.log(exp_timeline)
+experimental_procedure = {
+     timeline: [easy_block, hard_block],
+     timeline_variables: exp_timeline,
+    }
+
+// combine to experimental timeline
+// add trianing block: training_intro, training_block1, training_block2,
+// add experimental block:experimental_start, experimental_procedure,
+// add full screen; add resize
+// training_intro, training_block1, training_block2,
+// add: full_screen, resize, instructions,
+  jsPsych.init({
+    timeline: [full_screen, resize, instructions, training_intro, training_block1, experimental_start, experimental_procedure, finish],
+    show_progress_bar: false,
+    on_finish: function() {
+      jsPsych.data.displayData();
+    }
+  })
+
+  </script>
+</html>
